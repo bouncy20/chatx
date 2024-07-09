@@ -31,4 +31,4 @@ name: Build and push
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: bouncy20/chatx:latest
+        tags: bouncy3/chatx:latest
