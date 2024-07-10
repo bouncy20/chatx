@@ -1,55 +1,122 @@
-// pages/api/channels/[channelId].tsx
-
 import { NextResponse } from "next/server";
+
+import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
-
-export async function generateStaticParams() {
-  const channels = await fetchChannels(); // Replace with your actual data fetching function
-  return channels.map((channel) => ({
-    params: { channelId: channel.id.toString() },
-  }));
-}
-
-async function fetchChannels() {
-  // Replace with your actual database fetch logic
-  return await db.channel.findMany(); // Example assuming db.channel.findMany() fetches all channels
-}
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { channelId: string } }
+  { params }: { params: { memberId: string } }
 ) {
   try {
-    const { channelId } = params;
-    // Implement your DELETE logic based on channelId
-    // Example:
-    await db.channel.delete({ where: { id: parseInt(channelId) } });
-    
-    return new NextResponse("Deleted successfully", { status: 200 });
+    const profile = await currentProfile();
+    const { searchParams } = new URL(req.url);
+
+    const serverId = searchParams.get("serverId");
+
+    if (!profile) {
+      return new NextResponse("Unauthorized" ,{ status: 401 });
+    }
+
+    if (!serverId) {
+      return new NextResponse("Server ID missing", { status: 400 });
+    }
+
+    if (!params.memberId) {
+      return new NextResponse("Member ID missing", { status: 400 });
+    }
+
+    const server = await db.server.update({
+      where: {
+        id: serverId,
+        profileId: profile.id,
+      },
+      data: {
+        members: {
+          deleteMany: {
+            id: params.memberId,
+            profileId: {
+              not: profile.id
+            }
+          }
+        }
+      },
+      include: {
+        members: {
+          include: {
+            profile: true,
+          },
+          orderBy: {
+            role: "asc",
+          }
+        },
+      },
+    });
+
+    return NextResponse.json(server);
   } catch (error) {
-    console.error("[DELETE_CHANNEL]", error);
+    console.log("[MEMBER_ID_DELETE]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { channelId: string } }
+  { params }: { params: { memberId: string } }
 ) {
   try {
-    const { channelId } = params;
+    const profile = await currentProfile();
+    const { searchParams } = new URL(req.url);
     const { role } = await req.json();
 
-    // Implement your PATCH logic based on channelId and role
-    // Example:
-    await db.channel.update({
-      where: { id: parseInt(channelId) },
-      data: { role },
+    const serverId = searchParams.get("serverId");
+
+    if (!profile) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (!serverId) {
+      return new NextResponse("Server ID missing", { status: 400 });
+    }
+
+    if (!params.memberId) {
+      return new NextResponse("Member ID missing", { status: 400 });
+    }
+
+    const server = await db.server.update({
+      where: {
+        id: serverId,
+        profileId: profile.id,
+      },
+      data: {
+        members: {
+          update: {
+            where: {
+              id: params.memberId,
+              profileId: {
+                not: profile.id
+              }
+            },
+            data: {
+              role
+            }
+          }
+        }
+      },
+      include: {
+        members: {
+          include: {
+            profile: true,
+          },
+          orderBy: {
+            role: "asc"
+          }
+        }
+      }
     });
 
-    return new NextResponse("Updated successfully", { status: 200 });
+    return NextResponse.json(server);
   } catch (error) {
-    console.error("[PATCH_CHANNEL]", error);
+    console.log("[MEMBERS_ID_PATCH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

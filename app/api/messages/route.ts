@@ -6,8 +6,6 @@ import { db } from "@/lib/db";
 
 const MESSAGES_BATCH = 10;
 
- // Add this line
-
 export async function GET(
   req: Request
 ) {

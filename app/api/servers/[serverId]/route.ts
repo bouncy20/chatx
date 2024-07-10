@@ -1,6 +1,3 @@
-
-
-
 import { NextResponse } from "next/server";
 
 import { currentProfile } from "@/lib/current-profile";
