@@ -1,21 +1,30 @@
 // pages/api/members/[memberId].ts
 
 import { NextResponse } from "next/server";
+import { GetStaticPaths } from "next";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 
-export async function generateStaticParams() {
-  // Example: Fetch dynamic data to determine paths
-  const members = await db.members.findMany();
-  const paths = members.map((member) => ({
-    params: { memberId: member.id.toString() },
-  }));
+export const generateStaticParams: GetStaticPaths = async () => {
+  try {
+    // Example: Fetch dynamic data to determine paths
+    const members = await db.members.findMany();
+    const paths = members.map((member) => ({
+      params: { memberId: member.id.toString() },
+    }));
 
-  return {
-    paths,
-    fallback: false, // or 'blocking' if you want to use incremental static regeneration
-  };
-}
+    return {
+      paths,
+      fallback: false, // or 'blocking' if you want to use incremental static regeneration
+    };
+  } catch (error) {
+    console.error("Error generating static paths:", error);
+    return {
+      paths: [],
+      fallback: false,
+    };
+  }
+};
 
 export async function DELETE(
   req: Request,
