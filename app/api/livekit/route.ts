@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+
 
 
 import { AccessToken } from "livekit-server-sdk";

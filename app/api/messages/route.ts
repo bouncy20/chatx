@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 
 const MESSAGES_BATCH = 10;
 
-export const dynamic = 'force-dynamic'; // Add this line
+ // Add this line
 
 export async function GET(
   req: Request
