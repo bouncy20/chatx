@@ -1,7 +1,21 @@
-import { NextResponse } from "next/server";
+// pages/api/members/[memberId].ts
 
+import { NextResponse } from "next/server";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
+
+export async function generateStaticParams() {
+  // Example: Fetch dynamic data to determine paths
+  const members = await db.members.findMany();
+  const paths = members.map((member) => ({
+    params: { memberId: member.id.toString() },
+  }));
+
+  return {
+    paths,
+    fallback: false, // or 'blocking' if you want to use incremental static regeneration
+  };
+}
 
 export async function DELETE(
   req: Request,
@@ -14,7 +28,7 @@ export async function DELETE(
     const serverId = searchParams.get("serverId");
 
     if (!profile) {
-      return new NextResponse("Unauthorized" ,{ status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     if (!serverId) {
@@ -35,10 +49,10 @@ export async function DELETE(
           deleteMany: {
             id: params.memberId,
             profileId: {
-              not: profile.id
-            }
-          }
-        }
+              not: profile.id,
+            },
+          },
+        },
       },
       include: {
         members: {
@@ -47,7 +61,7 @@ export async function DELETE(
           },
           orderBy: {
             role: "asc",
-          }
+          },
         },
       },
     });
@@ -93,14 +107,14 @@ export async function PATCH(
             where: {
               id: params.memberId,
               profileId: {
-                not: profile.id
-              }
+                not: profile.id,
+              },
             },
             data: {
-              role
-            }
-          }
-        }
+              role,
+            },
+          },
+        },
       },
       include: {
         members: {
@@ -108,15 +122,15 @@ export async function PATCH(
             profile: true,
           },
           orderBy: {
-            role: "asc"
-          }
-        }
-      }
+            role: "asc",
+          },
+        },
+      },
     });
 
     return NextResponse.json(server);
   } catch (error) {
-    console.log("[MEMBERS_ID_PATCH]", error);
+    console.log("[MEMBER_ID_PATCH]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
